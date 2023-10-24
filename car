@@ -1,0 +1,92 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+df = pd.read_csv('C:/Users/micha/Downloads/dsu_fall23_tech_app_dataset.csv')
+
+1. Which driver has won the most races? (NOT championships)
+*
+
+print(df.sort_values('Race_Podiums'))
+
+2. Which country has the most champions? How many champions?
+*
+
+grouped  = df.groupby('Country') 
+check = grouped.sum() 
+print(check.sort_values('Has_Won_A_Championship', ascending = False))
+
+3. Of all drivers who have participated in at least 5 races, who has won the highest proportion of races they competed in?
+
+qu = df[df['Total_Races'] >= 5] 
+qu['proportion'] = qu['Race_Wins'] / qu['Total_Races'] 
+print(qu.sort_values('proportion', ascending = False))
+
+4. Which driver(s) participated in the most seasons? How many seasons did they participate in?
+
+def count_commas(text):     
+return text.count(',') + 1 
+df['Seasons'] = df['Seasons'].apply(lambda x: count_commas(x)) 
+qu = df.groupby('Driver')['Seasons'].sum().reset_index() 
+print(qu.sort_values('Seasons', ascending=False))
+
+Challenge
+1. Your friend claims that F1 races are boring because the racer who starts in first (the racer with the pole position) usually wins the race.
+
+First, explain whether our dataset is suitable to properly verify this claim.
+
+Then, examine the relation between the frequency of a driver being in pole position and them winning their races (even if you believe the data is not suitable).
+
+Finally, based on all of the evidence, tell us what you would say to your friend.
+
+
+
+df['proportion_win'] = df['Race_Wins'] / df['Total_Races']
+driver_pole_win = df.groupby('Driver')[['Pole_Positions', 'proportion_win']].sum().reset_index()
+plt.scatter(driver_pole_win['Pole_Positions'], driver_pole_win['proportion_win'])
+plt.xlabel('Number of Pole Positions')
+plt.ylabel('Proportion of Wins')
+plt.title('Relationship between Pole Positions and Race Wins')
+plt.grid(True)
+plt.show()
+
+2.
+qu = df.groupby(['Decade', 'Driver'])
+result = qu[['Race_Wins', 'Total_Championships_Won', 'Race_Podiums']].max()
+result_sorted = result.sort_values(by=['Race_Wins', 'Total_Championships_Won', 'Race_Podiums'], ascending=False)
+print(result_sorted)
+
+std_deviation = df.groupby(['Decade', 'Driver'])[['Race_Wins', 'Total_Championships_Won', 'Race_Podiums']].std()
+
+
+std_deviation.reset_index(inplace=True)
+
+
+std_deviation_sorted = std_deviation.sort_values(by=['Race_Wins', 'Total_Championships_Won', 'Race_Podiums'], ascending=True)
+
+std_deviation_metrics = df.groupby(['Decade'])[['Race_Wins', 'Race_Podiums', 'Total_Championships_Won', 'Total_Races']].std()
+
+
+std_deviation_metrics['Race_Wins_Proportion'] = std_deviation_metrics['Race_Wins']
+std_deviation_metrics['Race_Podiums_Proportion'] = std_deviation_metrics['Race_Podiums'] 
+std_deviation_metrics['Total_Championships_Won_Proportion'] = std_deviation_metrics['Total_Championships_Won'] 
+
+std_deviation_metrics.reset_index(inplace=True)
+
+plt.figure(figsize=(12, 8))
+
+plt.plot(std_deviation_metrics['Decade'], std_deviation_metrics['Race_Wins_Proportion'], label='Race Wins Proportion (Std Dev)')
+plt.plot(std_deviation_metrics['Decade'], std_deviation_metrics['Race_Podiums_Proportion'], label='Race Podiums Proportion (Std Dev)')
+plt.plot(std_deviation_metrics['Decade'], std_deviation_metrics['Total_Championships_Won_Proportion'], label='Total Championships Won Proportion (Std Dev)')
+
+plt.xlabel('Decade')
+plt.ylabel('Proportion (Std Dev)')
+plt.title('Proportion of Race Wins, Race Podiums, and Total Championships Won (Std Dev) by Decade')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+df['proportion_podium'] = df['Race_Podiums']/df['Total_Races']
+df['proportion_won'] = df['Race_Wins']/ df['Total_Races']
+df['proportion_champ'] = df['Total_Championships_Won']/df['Total_Races']
+ce = df.groupby('Decade')[['proportion_podium', 'proportion_won', 'proportion_champ']].mean().reset_index()
+print(ce.sort_values(['proportion_podium', 'proportion_won', 'proportion_champ'], ascending=True))
